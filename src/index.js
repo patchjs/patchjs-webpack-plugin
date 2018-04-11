@@ -1,0 +1,141 @@
+import {getEntryConfig, setEntryConfig, getBuildConfig} from './config';
+import calcDiffData from '@alipay/patch-diff';
+import {logger, calcDiffFileName} from './util';
+import urllib from 'urllib';
+import co from 'co';
+import {parallel} from 'async';
+
+const defaultOptions = {
+  patchEntryPath: [],
+  buildConfigPath: 'package.json',
+  count: 5,
+  increment: false,
+  path: '',
+  timeout: 30000
+};
+
+function PatchjsWebpackPlugin (options) {
+  options = options || defaultOptions;
+  if (options !== defaultOptions) {
+    for (let p in defaultOptions) {
+      if (!options.hasOwnProperty(p)) {
+        options[p] = defaultOptions[p];
+      }
+    }
+  }
+  const buildConfig = getBuildConfig(options.buildConfigPath);
+  if (!buildConfig) {
+    process.exit();
+  }
+
+  for (let i = 0, len = options.patchEntryPath.length; i < len; i++) {
+    let entryConfig = getEntryConfig(options.patchEntryPath[i]);
+    if (!entryConfig) {
+      setEntryConfig(options.patchEntryPath[i], buildConfig.version);
+    }
+  }
+
+  this.buildConfig = buildConfig;
+  this.options = options;
+}
+
+PatchjsWebpackPlugin.prototype.apply = function (compiler) {
+  if (!this.options.increment) {
+    return;
+  }
+  compiler.plugin('emit', function (compilation, callback) {
+    const version = this.buildConfig.version;
+    for (let i = 0, len = this.options.patchEntryPath.length; i < len; i++) {
+      setEntryConfig(this.options.patchEntryPath[i], version);
+    }
+
+    let requestCallback = [];
+    for (let fileName in compilation.assets) {
+      if (compilation.assets.hasOwnProperty(fileName) && /\.(js|css)$/.test(fileName)) {
+        const content = this.getAssetContent(compilation.assets[fileName]);
+        // calculate diff file path.
+        const diffFilePathArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
+        // start build diff js.
+        for (let i = 0, len = diffFilePathArray.length; i < len; i++) {
+          requestCallback.push((response) => {
+            this.buildDiffFile(diffFilePathArray[i], content, (result) => {
+              response(null, result);
+            });
+          });
+        }
+      }
+    }
+    parallel(requestCallback, (err, results) => {
+      if (!err) {
+        for (let i = 0, len = results.length; i < len; i++) {
+          const item = results[i];
+          if (item && !item.errCode) {
+            compilation.assets[item.diffFileName] = {
+              source: () => {
+                return item.source;
+              },
+              size: () => {
+                return Buffer.byteLength(item.source, 'utf8');
+              }
+            };
+          } else {
+            logger.err(item.msg);
+            if (item.errCode === 'reqerror') process.exit(1);
+          }
+        }
+        callback();
+      }
+    });
+  }.bind(this));
+};
+
+PatchjsWebpackPlugin.prototype.getAssetContent = function (asset) {
+  let content = null;
+  if (asset._value) {
+    content = asset._value;
+  } else if (asset.children) {
+    content = '';
+    asset.children.forEach(function (item) {
+      if (item._value) {
+        content += item._value;
+      } else {
+        content += item;
+      }
+    });
+  } else if (asset._cachedSource) {
+    content = asset._cachedSource.source;
+  }
+  return content;
+};
+
+// diff build js
+PatchjsWebpackPlugin.prototype.buildDiffFile = function (diffFileItem, content, callback) {
+  const timeout = this.options.timeout;
+  co(function * () { // es6 co
+    const result = yield urllib.requestThunk(diffFileItem.oldFileUrl, {timeout: timeout});
+    const oldFileContent = result.data.toString();
+    if (result.status === 200) {
+      const result = calcDiffData(oldFileContent, content);
+      let diffResult = {
+        diffFileName: diffFileItem.diffFileName,
+        source: JSON.stringify(result)
+      };
+      callback(diffResult);
+    } else {
+      const msg = `Not Found: ${diffFileItem.oldFileUrl}`;
+      let result = {
+        errCode: 'reserror',
+        msg: msg
+      };
+      callback(result);
+    }
+  }).catch((e) => {
+    let result = {
+      errCode: 'reqerror',
+      msg: e
+    };
+    callback(result);
+  });
+};
+
+module.exports = PatchjsWebpackPlugin;

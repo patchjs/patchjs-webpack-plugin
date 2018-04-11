@@ -1,0 +1,36 @@
+{
+  "name": "default",
+  "description": "Patch.js for webpack demo",
+  "version": "0.0.9",
+  "author": {
+    "name": "hl103499",
+    "email": "hl103499@koubei.com"
+  },
+  "keywords": [
+    "patchjs-webpack-plugin",
+    "patch-build",
+    "patch",
+    "patchjs"
+  ],
+  "dependencies": {},
+  "engines": {
+    "node": ">= 1.4.0"
+  },
+  "preferGlobal": false,
+  "scripts": {
+    "build": "webpack",
+    "server": "NODE_ENV=dev webpack-dev-server --inline false --content-base ./"
+  },
+  "publishConfig": {
+    "registry": "http://registry.npm.alibaba-inc.com"
+  },
+  "devDependencies": {
+    "@alipay/patchjs-webpack-plugin": "^0.1.2",
+    "css-loader": "^0.28.0",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "style-loader": "^0.16.1",
+    "uglifyjs-webpack-plugin": "^0.4.1",
+    "webpack": "^2.3.3",
+    "webpack-dev-server": "^2.4.2"
+  }
+}

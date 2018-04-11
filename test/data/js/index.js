@@ -1,0 +1,1 @@
+"use strict";var utils={};utils.format=function(t){return t.getFullYear()+"-"+(t.getMonth()+1)+"-"+t.getDate()};var index={};index.init=function(){document.getElementById("time").textContent=utils.format(new Date),console.log("heli.."),console.log("heli again.."),console.log("test"),console.log("test 3+"),console.log("test 4"),console.log("test 5")},index.init();

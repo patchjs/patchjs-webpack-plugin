@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,user-scalable=no">
+  <meta name="patchjs" content="version=0.1.0">
+  <title>patchjs test</title>
+  <script src="https://a.alipayobjects.com/g/patchjs/patch-loader/0.0.5/index.js"></script>
+</head>
+<body>
+    <span>hello patchjs</span>
+    <span id="time"></span>
+</body>
+<script>
+  patchjs.config({
+    cache: true,
+    increment: true,
+    debug: false
+  }).load('index.js');
+</script>
+</html>
