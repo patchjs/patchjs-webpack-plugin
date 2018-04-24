@@ -1,5 +1,5 @@
 import {getEntryConfig, setEntryConfig, getBuildConfig} from './config';
-import calcDiffData from '@alipay/patch-diff';
+import calcDiffData from 'patchjs-diff';
 import {logger, calcDiffFileName} from './util';
 import urllib from 'urllib';
 import co from 'co';

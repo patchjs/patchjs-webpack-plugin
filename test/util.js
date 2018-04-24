@@ -11,7 +11,7 @@ describe('util.js', () => {
   });
 
   it('calcDiffFileName (fileName, path, version, count)', () => {
-    const path = 'https://os.alipayobjects.com/patchjs/';
+    const path = 'https://static.domain.com/patchjs/';
     // normal case
     let fileName = 'index.js';
     expect(calcDiffFileName(fileName, path, '0.1.5', 3)).to.eql([{

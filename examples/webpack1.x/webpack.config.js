@@ -1,6 +1,5 @@
 var path = require('path');
 var PatchjsWebpackPlugin = require('../../dist/index.js');
-// var PatchjsWebpackPlugin = require('@alipay/patchjs-webpack-plugin');
 var UglifyjsWebpackPlugin = require('uglifyjs-webpack-plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var fs = require('fs');
