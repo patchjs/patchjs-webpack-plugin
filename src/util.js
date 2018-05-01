@@ -28,9 +28,9 @@ export function calcDiffFileName (fileName, path, version, count) {
     if (patchVersion < 0) {
       break;
     }
-    const oldVersion = `${prefix}.${patchVersion.toString()}`;
-    data.oldFileUrl = `${path}${oldVersion}/${fileName}`;
-    data.diffFileName = fileName.replace(new RegExp(extName + '$', 'i'), `-${oldVersion}${extName}`);
+    const localVersion = `${prefix}.${patchVersion.toString()}`;
+    data.oldFileUrl = `${path}${localVersion}/${fileName}`;
+    data.diffFileName = fileName.replace(new RegExp(extName + '$', 'i'), `-${localVersion}${extName}`);
     diffFileNameArray.push(data);
   }
   return diffFileNameArray;

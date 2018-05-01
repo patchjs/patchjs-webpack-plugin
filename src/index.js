@@ -112,17 +112,17 @@ PatchjsWebpackPlugin.prototype.getAssetContent = function (asset) {
 PatchjsWebpackPlugin.prototype.buildDiffFile = function (diffFileItem, content, callback) {
   const timeout = this.options.timeout;
   co(function * () { // es6 co
-    const result = yield urllib.requestThunk(diffFileItem.oldFileUrl, {timeout: timeout});
-    const oldFileContent = result.data.toString();
+    const result = yield urllib.requestThunk(diffFileItem.localFileUrl, {timeout: timeout});
+    const localFileContent = result.data.toString();
     if (result.status === 200) {
-      const result = calcDiffData(oldFileContent, content);
+      const result = calcDiffData(localFileContent, content);
       let diffResult = {
         diffFileName: diffFileItem.diffFileName,
         source: JSON.stringify(result)
       };
       callback(diffResult);
     } else {
-      const msg = `Not Found: ${diffFileItem.oldFileUrl}`;
+      const msg = `Not Found: ${diffFileItem.localFileUrl}`;
       let result = {
         errCode: 'reserror',
         msg: msg
