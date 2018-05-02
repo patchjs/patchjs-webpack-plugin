@@ -37,3 +37,44 @@ module.exports = {
 
 ```
 
+## Options
+
+**patchEntryPath** `Array`
+
+**default** `['index.html']`
+
+config the entry page of path.
+
+<br/>
+
+**increment** `Boolean`
+
+**default** `false`
+
+It enables the incremental build.
+
+<br/>
+
+**count** `Number`
+
+**default** `5`
+
+how many incremental versions are build.
+
+<br/>
+
+**path** `String`
+
+the URL prefix of a static file.
+
+eg: 
+
+URL: http://static.domain.com/path/to/1.0.0/file.js
+
+Prefix: http://static.domain.com/path/to/
+
+
+
+
+
+
