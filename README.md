@@ -69,9 +69,9 @@ the URL prefix of a static file.
 
 eg: 
 
-URL: http://static.domain.com/path/to/1.0.0/file.js
+URL: `http://static.domain.com/path/to/1.0.0/file.js`
 
-Prefix: http://static.domain.com/path/to/
+Prefix: `http://static.domain.com/path/to/`
 
 
 
