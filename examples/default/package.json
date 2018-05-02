@@ -17,7 +17,7 @@
   "preferGlobal": false,
   "scripts": {
     "build": "webpack",
-    "server": "NODE_ENV=dev webpack-dev-server --inline false --content-base ./"
+    "start": "NODE_ENV=dev webpack-dev-server --inline false --content-base ./"
   },
   "devDependencies": {
     "css-loader": "^0.28.0",

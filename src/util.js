@@ -29,7 +29,7 @@ export function calcDiffFileName (fileName, path, version, count) {
       break;
     }
     const localVersion = `${prefix}.${patchVersion.toString()}`;
-    data.oldFileUrl = `${path}${localVersion}/${fileName}`;
+    data.localFileUrl = `${path}${localVersion}/${fileName}`;
     data.diffFileName = fileName.replace(new RegExp(extName + '$', 'i'), `-${localVersion}${extName}`);
     diffFileNameArray.push(data);
   }
