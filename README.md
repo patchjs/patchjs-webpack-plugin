@@ -13,7 +13,7 @@ npm install patchjs-webpack-plugin --save-dev
 
 ## How to use
 
-```
+```js
 var path = require('path');
 var PatchjsWebpackPlugin = require('patchjs-webpack-plugin');
 
@@ -72,6 +72,17 @@ eg:
 URL: `http://static.domain.com/path/to/1.0.0/file.js`
 
 Prefix: `http://static.domain.com/path/to/`
+
+<br/>
+
+**timeout** `Number`
+
+**default** `30000`
+
+request timeout value.
+
+
+
 
 
 
