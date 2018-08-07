@@ -6,7 +6,6 @@ module.exports = {
   ],
   "rules": {
     "semi": [2, "always"],
-    "no-eval": 0,
-    "no-invalid-regexp": 0
+    "no-eval": 0
   }
 };
