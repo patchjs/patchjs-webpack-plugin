@@ -34,4 +34,4 @@ if (patchjs) {
     checkChunk();
   };
   head.appendChild(script);
-}`
+}`;
