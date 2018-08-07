@@ -38,8 +38,10 @@ PatchjsWebpackPlugin.prototype.apply = function (compiler) {
   }
   compiler.plugin("compilation", function (compilation, params) {
     compilation.mainTemplate.plugin("require-extensions", function(source, chunk, hash) {
+      // extract src
       const srcMatcher = source.match(/(?<=script\.src\s*\=)[\s\S]*?(?=\n\t)/i);
       if (srcMatcher && srcMatcher.length > 0) {
+        // replace dynamic code
         var reg = /var\s+head\s+\=[\s\S]+\(script\);/igm;
         var dynamicLoadCode = `var src = ${srcMatcher[0]}\n\t` + codeTpl;
         source = source.replace(reg, dynamicLoadCode);
