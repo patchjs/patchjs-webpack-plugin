@@ -7,13 +7,13 @@ function checkChunk () {
   }
 }
 
-if (patchjs) {
+if (window.patchjs) {
   var timeout = setTimeout(onComplete, 120000);
   function onComplete() {
     clearTimeout(timeout);
     checkChunk();
   };
-  patchjs.wait().load(src, onComplete);
+  window.patchjs.wait().load(src, onComplete);
 } else {
   var head = document.getElementsByTagName('head')[0];
   var script = document.createElement('script');
