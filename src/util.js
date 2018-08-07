@@ -1,10 +1,7 @@
 import colors from 'colors';
+import fs from 'fs';
 
 export const logger = {
-  vip: (msg) => {
-    msg = colors.bold(msg);
-    console.log(`\n${msg}\n`);
-  },
   err: (msg) => {
     console.log(colors.red(msg));
   },
@@ -15,6 +12,17 @@ export const logger = {
     console.log(msg);
   }
 };
+
+export function getBuildConfig (buildCfgPath) {
+  let content = fs.readFileSync(buildCfgPath, {
+    encoding: 'utf8'
+  });
+  if (!content) {
+    content = '{}';
+  }
+  let pkg = JSON.parse(content);
+  return pkg;
+}
 
 export function calcDiffFileName (fileName, path, version, count) {
   const lastDotIndex = version.lastIndexOf('.');

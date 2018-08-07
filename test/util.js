@@ -1,13 +1,21 @@
 /* eslint-env node, mocha */
 import expect from 'expect.js';
-import {logger, calcDiffFileName} from '../src/util';
+import {logger, calcDiffFileName, getBuildConfig} from '../src/util';
 
 describe('util.js', () => {
   it('logger', () => {
-    expect(logger.vip).to.be.an('function');
     expect(logger.err).to.be.an('function');
     expect(logger.warn).to.be.an('function');
     expect(logger.info).to.be.an('function');
+  });
+
+  const testPath = __dirname;
+  const buildCfgPath = testPath + '/data/package.json';
+
+  describe('config.js', () => {
+    it('getBuildConfig (buildCfgPath)', () => {
+      expect(getBuildConfig(buildCfgPath).version).to.be('3.4.5');
+    });
   });
 
   it('calcDiffFileName (fileName, path, version, count)', () => {
