@@ -5,6 +5,8 @@ var UglifyjsWebpackPlugin = require('uglifyjs-webpack-plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var nodeEnv = process.env.NODE_ENV;
 var pkg = JSON.parse(fs.readFileSync('./package.json'));
+var webpack = require('webpack');
+
 var increment = true;
 if (nodeEnv === 'dev') {
   increment = false;
@@ -17,6 +19,7 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, 'dist/' + pkg.name + '/' + pkg.version),
+    chunkFilename: '[name].js',
     filename: '[name].js'
   },
   module: {
@@ -27,6 +30,7 @@ module.exports = {
   plugins: [
     new UglifyjsWebpackPlugin(),
     new ExtractTextPlugin('[name].css'),
+    new webpack.HashedModuleIdsPlugin(),
     new PatchjsWebpackPlugin({increment: increment, path: 'http://127.0.0.1:8080/dist/default/'})
   ]
 };

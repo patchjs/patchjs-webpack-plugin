@@ -4,9 +4,9 @@ import {logger, calcDiffFileName} from './util';
 import urllib from 'urllib';
 import co from 'co';
 import {parallel} from 'async';
+import {codeTpl} from './tpl'
 
 const defaultOptions = {
-  patchEntryPath: [],
   buildConfigPath: 'package.json',
   count: 5,
   increment: false,
@@ -28,13 +28,6 @@ function PatchjsWebpackPlugin (options) {
     process.exit();
   }
 
-  for (let i = 0, len = options.patchEntryPath.length; i < len; i++) {
-    let entryConfig = getEntryConfig(options.patchEntryPath[i]);
-    if (!entryConfig) {
-      setEntryConfig(options.patchEntryPath[i], buildConfig.version);
-    }
-  }
-
   this.buildConfig = buildConfig;
   this.options = options;
 }
@@ -43,12 +36,20 @@ PatchjsWebpackPlugin.prototype.apply = function (compiler) {
   if (!this.options.increment) {
     return;
   }
+  compiler.plugin("compilation", function (compilation, params) {
+    compilation.mainTemplate.plugin("require-extensions", function(source, chunk, hash) {
+      const srcMatcher = source.match(/(?<=script\.src\s*\=)([\s\S]*?)(?=\n\t)/i);
+      if (srcMatcher && srcMatcher.length > 0) {
+        var reg = /var\s+head\s+\=[\s\S]+\(script\);/igm;
+        var dynamicLoadCode = `var src = ${srcMatcher[0]}\n\t` + codeTpl;
+        source = source.replace(reg, dynamicLoadCode);
+      }
+      return source;
+    });
+  });
+
   compiler.plugin('emit', function (compilation, callback) {
     const version = this.buildConfig.version;
-    for (let i = 0, len = this.options.patchEntryPath.length; i < len; i++) {
-      setEntryConfig(this.options.patchEntryPath[i], version);
-    }
-
     let requestCallback = [];
     for (let fileName in compilation.assets) {
       if (compilation.assets.hasOwnProperty(fileName) && /\.(js|css)$/.test(fileName)) {

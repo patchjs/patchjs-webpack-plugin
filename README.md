@@ -31,21 +31,13 @@ module.exports = {
     ]
   },
   plugins: [
-    new PatchjsWebpackPlugin({increment: true})
+    new PatchjsWebpackPlugin({increment: true, path: 'http://static.domain.com/path/to/'})
   ]
 };
 
 ```
 
 ## Options
-
-**patchEntryPath** `Array`
-
-**default** `['index.html']`
-
-config the entry page of path.
-
-<br/>
 
 **increment** `Boolean`
 
