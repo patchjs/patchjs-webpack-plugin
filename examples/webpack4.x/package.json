@@ -1,0 +1,31 @@
+{
+  "name": "webpack4.x",
+  "description": "Patch.js for webpack 4.x Demo",
+  "version": "0.0.6",
+  "author": {
+    "name": "yulongheli"
+  },
+  "keywords": [
+    "patchjs-webpack-plugin",
+    "patch",
+    "patchjs"
+  ],
+  "dependencies": {},
+  "engines": {
+    "node": ">= 1.4.0"
+  },
+  "preferGlobal": false,
+  "scripts": {
+    "build": "webpack --mode production",
+    "start": "NODE_ENV=dev webpack-dev-server --mode development --inline false --content-base ./"
+  },
+  "devDependencies": {
+    "css-loader": "^0.28.0",
+    "style-loader": "^0.16.1",
+    "mini-css-extract-plugin": "^0.4.1",
+    "style-loader": "^0.22.0",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5"
+  }
+}
