@@ -13,4 +13,4 @@ export const codeTpl = `
   } else {
     throw new Error('The loader of Patch.js is missing.');
   }
-`
+`;
