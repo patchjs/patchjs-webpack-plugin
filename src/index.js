@@ -27,22 +27,24 @@ function PatchjsWebpackPlugin (options) {
 }
 
 function onRequireExtension (source) {
+  const Tpl = Template || this
   // for require.ensure
   const srcMatcher = source.match(/(?<=script\.src\s*\=)[\s\S]*?(?=\n\t)/i); // eslint-disable-line
   if (srcMatcher && srcMatcher.length > 0) {
     // replace dynamic code
     var scriptReg = /\/\/\s+start\s+chunk\s+loading[\s\S]+\(script\);/igm;
-    var scriptLoadCode = Template.asString([
+    var scriptLoadCode = Tpl.asString([
+      `// Script loading by Patch.js`,
       `var src = ${srcMatcher[0]}`,
       `if (window.patchjs) {`,
-      Template.indent([
+      Tpl.indent([
         `var timeout = setTimeout(onComplete, 120000);`,
         `function onComplete() {`,
-        Template.indent([
+        Tpl.indent([
           `clearTimeout(timeout);`,
           `var chunk = installedChunks[chunkId];`,
           `if(chunk !== 0) {`,
-          Template.indent([
+          Tpl.indent([
             `if(chunk) chunk[1](new Error('Loading chunk ' + chunkId + ' failed.'));`,
             `installedChunks[chunkId] = undefined;`
           ]),
@@ -52,7 +54,7 @@ function onRequireExtension (source) {
         `window.patchjs.wait().load(src, onComplete);`
       ]),
       `} else {`,
-      Template.indent([
+      Tpl.indent([
         `throw new Error('The loader of Patch.js is missing.');`
       ]),
       `}`
@@ -62,25 +64,26 @@ function onRequireExtension (source) {
   }
 
   //for mini-css-extract-plugin
-  if (/(installedCssChunks)/.test(source)) {
+  if (/installedCssChunks/.test(source)) {
     var linkReg = /var\s+linkTag\s+=\s+[\s\S]+\(linkTag\);/igm;
-    var linkLoadCode = Template.asString([
+    var cssLoadCode = Tpl.asString([
+      `// CSS loading by Patch.js`,
       `if (window.patchjs) {`,
-      Template.indent([
-        `patchjs.wait().load(fullhref, function () {`,
+      Tpl.indent([
+        `window.patchjs.wait().load(fullhref, function () {`,
         Template.indent([
           `resolve();`
         ]),
         `});`
       ]),
       `} else {`,
-      Template.indent([
+      Tpl.indent([
         `throw new Error('The loader of Patch.js is missing.');`
       ]),
       `}`
     ]);
     // ;
-    source = source.replace(scriptReg, scriptLoadCode);
+    source = source.replace(linkReg, cssLoadCode);
   }
   return source;
 }
