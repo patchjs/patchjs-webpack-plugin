@@ -1,7 +1,7 @@
 {
   "name": "default",
   "description": "Patch.js for webpack Demo",
-  "version": "0.0.12",
+  "version": "0.0.16",
   "author": {
     "name": "yulongheli"
   },

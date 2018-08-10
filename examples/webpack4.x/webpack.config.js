@@ -16,6 +16,12 @@ module.exports = {
     example: './example.js',
     example1: './example1.js'
   },
+  optimization: {
+    runtimeChunk: {
+      name: 'manifest'
+    },
+    minimize: true
+  },
   output: {
     path: path.join(__dirname, 'dist/' + pkg.name + '/' + pkg.version),
     chunkFilename: '[name].js',

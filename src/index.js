@@ -3,7 +3,8 @@ import {logger, calcDiffFileName, getBuildConfig} from './util';
 import urllib from 'urllib';
 import co from 'co';
 import {parallel} from 'async';
-import {codeTpl} from './tpl'
+import {Template} from 'webpack';
+
 
 const defaultOptions = {
   buildConfigPath: 'package.json',
@@ -13,38 +14,79 @@ const defaultOptions = {
   timeout: 30000
 };
 
+const pluginName = 'patchjs-webpack-plugin';
+
 function PatchjsWebpackPlugin (options) {
-  options = options || defaultOptions;
-  if (options !== defaultOptions) {
-    for (let p in defaultOptions) {
-      if (!options.hasOwnProperty(p)) {
-        options[p] = defaultOptions[p];
-      }
-    }
-  }
-  const buildConfig = getBuildConfig(options.buildConfigPath);
+  this.options = Object.assign(defaultOptions, options);
+  const buildConfig = getBuildConfig(this.options.buildConfigPath);
   if (!buildConfig) {
     process.exit();
   }
 
   this.buildConfig = buildConfig;
-  this.options = options;
 }
 
 function onRequireExtension (source) {
-  // extract src
-  const srcMatcher = source.match(/(?<=script\.src\s*\=)[\s\S]*?(?=\n\t)/i);
+  // for require.ensure
+  const srcMatcher = source.match(/(?<=script\.src\s*\=)[\s\S]*?(?=\n\t)/i); // eslint-disable-line
   if (srcMatcher && srcMatcher.length > 0) {
     // replace dynamic code
-    var reg = /var\s+head\s+\=[\s\S]+\(script\);/igm;
-    var dynamicLoadCode = `var src = ${srcMatcher[0]}\n\t` + codeTpl;
-    source = source.replace(reg, dynamicLoadCode);
+    var scriptReg = /\/\/\s+start\s+chunk\s+loading[\s\S]+\(script\);/igm;
+    var scriptLoadCode = Template.asString([
+      `var src = ${srcMatcher[0]}`,
+      `if (window.patchjs) {`,
+      Template.indent([
+        `var timeout = setTimeout(onComplete, 120000);`,
+        `function onComplete() {`,
+        Template.indent([
+          `clearTimeout(timeout);`,
+          `var chunk = installedChunks[chunkId];`,
+          `if(chunk !== 0) {`,
+          Template.indent([
+            `if(chunk) chunk[1](new Error('Loading chunk ' + chunkId + ' failed.'));`,
+            `installedChunks[chunkId] = undefined;`
+          ]),
+          `}`
+        ]),
+        `};`,
+        `window.patchjs.wait().load(src, onComplete);`
+      ]),
+      `} else {`,
+      Template.indent([
+        `throw new Error('The loader of Patch.js is missing.');`
+      ]),
+      `}`
+    ]);
+    // ;
+    source = source.replace(scriptReg, scriptLoadCode);
+  }
+
+  //for mini-css-extract-plugin
+  if (/(installedCssChunks)/.test(source)) {
+    var linkReg = /var\s+linkTag\s+=\s+[\s\S]+\(linkTag\);/igm;
+    var linkLoadCode = Template.asString([
+      `if (window.patchjs) {`,
+      Template.indent([
+        `patchjs.wait().load(fullhref, function () {`,
+        Template.indent([
+          `resolve();`
+        ]),
+        `});`
+      ]),
+      `} else {`,
+      Template.indent([
+        `throw new Error('The loader of Patch.js is missing.');`
+      ]),
+      `}`
+    ]);
+    // ;
+    source = source.replace(scriptReg, scriptLoadCode);
   }
   return source;
 }
 
 function onCompilation (compilation, params) {
-  compilation.mainTemplate.hooks ? compilation.mainTemplate.hooks.requireExtensions.tap('PatchjsWebpackPlugin', onRequireExtension) : compilation.mainTemplate.plugin("require-extensions", onRequireExtension);
+  compilation.mainTemplate.hooks ? compilation.mainTemplate.hooks.requireExtensions.tap(pluginName, onRequireExtension) : compilation.mainTemplate.plugin("require-extensions", onRequireExtension);
 }
 
 function onEmit (compilation, callback) {
@@ -52,7 +94,7 @@ function onEmit (compilation, callback) {
   let requestCallback = [];
   for (let fileName in compilation.assets) {
     if (compilation.assets.hasOwnProperty(fileName) && /\.(js|css)$/.test(fileName)) {
-      const content = this.getAssetContent(compilation.assets[fileName]);
+      const content = compilation.assets[fileName].source();
       if (content) {
         // calculate diff file path.
         const diffFilePathArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
@@ -98,34 +140,8 @@ PatchjsWebpackPlugin.prototype.apply = function (compiler) {
   if (!this.options.increment) {
     return;
   }
-  compiler.hooks ? compiler.hooks.compilation.tap('PatchjsWebpackPlugin', onCompilation) : compiler.plugin('compilation', onCompilation);
-  compiler.hooks ? compiler.hooks.emit.tapAsync('PatchjsWebpackPlugin', onEmit.bind(this)) :  compiler.plugin('emit', onEmit.bind(this));
-};
-
-PatchjsWebpackPlugin.prototype.getAssetContent = function (asset) {
-  let content = '';
-  if (asset._value) {
-    content = asset._value;
-  } else if (asset.children) {
-    asset.children.forEach(function (item) {
-      if (item._value) {
-        content += item._value;
-      } else {
-        content += item;
-      }
-    });
-  } else if (asset._cachedSource) {
-    content = asset._cachedSource;
-  } else if (asset._source) {
-    if (asset._source.children && asset._source.children.length > 0) {
-      asset._source.children.forEach(function (item) {
-        if (item._value) {
-          content += item._value;
-        }
-      });
-    }
-  }
-  return content;
+  compiler.hooks ? compiler.hooks.compilation.tap(pluginName, onCompilation) : compiler.plugin('compilation', onCompilation);
+  compiler.hooks ? compiler.hooks.emit.tapAsync(pluginName, onEmit.bind(this)) :  compiler.plugin('emit', onEmit.bind(this));
 };
 
 // diff build js
