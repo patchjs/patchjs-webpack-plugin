@@ -34,7 +34,6 @@ export function calcDiffFileName (fileName, path, version, count) {
   const prefix = version.substring(0, lastDotIndex);
   const extName = fileName.substring(fileName.lastIndexOf('.'));
   let patchVersion = parseInt(version.substring(lastDotIndex + 1));
-  
   let diffFileNameArray = [];
   for (let i = 1; i < count + 1; i++) {
     patchVersion -= 1;
