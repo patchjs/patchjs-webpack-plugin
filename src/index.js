@@ -27,37 +27,37 @@ function PatchjsWebpackPlugin (options) {
 }
 
 function onRequireExtension (source) {
-  const Tpl = Template || this
+  const Tpl = Template || this;
   // for require.ensure
   const srcMatcher = source.match(/(?<=script\.src\s*\=)[\s\S]*?(?=\n\t)/i); // eslint-disable-line
   if (srcMatcher && srcMatcher.length > 0) {
     // replace dynamic code
     var scriptReg = /\/\/\s+start\s+chunk\s+loading[\s\S]+\(script\);/igm;
     var scriptLoadCode = Tpl.asString([
-      `// Script loading by Patch.js`,
-      `var src = ${srcMatcher[0]}`,
-      `if (window.patchjs) {`,
+      '// Script loading by Patch.js',
+      `var __src__ = ${srcMatcher[0]}`,
+      'if (window.patchjs) {',
       Tpl.indent([
-        `var timeout = setTimeout(onComplete, 120000);`,
-        `function onComplete() {`,
+        'var timeout = setTimeout(onComplete, 120000);',
+        'function onComplete() {',
         Tpl.indent([
-          `clearTimeout(timeout);`,
-          `var chunk = installedChunks[chunkId];`,
-          `if(chunk !== 0) {`,
+          'clearTimeout(timeout);',
+          'var chunk = installedChunks[chunkId];',
+          'if(chunk !== 0) {',
           Tpl.indent([
-            `if(chunk) chunk[1](new Error('Loading chunk ' + chunkId + ' failed.'));`,
-            `installedChunks[chunkId] = undefined;`
+            'if(chunk) chunk[1](new Error("Loading chunk " + chunkId + " failed."));',
+            'installedChunks[chunkId] = undefined;'
           ]),
-          `}`
+          '}'
         ]),
-        `};`,
-        `window.patchjs.wait().load(src, onComplete);`
+        '};',
+        'window.patchjs.wait().load(__generateURL__(__src__), onComplete);'
       ]),
-      `} else {`,
+      '} else {',
       Tpl.indent([
-        `throw new Error('The loader of Patch.js is missing.');`
+        'throw new Error("The loader of Patch.js is missing.");'
       ]),
-      `}`
+      '}'
     ]);
     // ;
     source = source.replace(scriptReg, scriptLoadCode);
@@ -67,20 +67,20 @@ function onRequireExtension (source) {
   if (/installedCssChunks/.test(source)) {
     var linkReg = /var\s+linkTag\s+=\s+[\s\S]+\(linkTag\);/igm;
     var cssLoadCode = Tpl.asString([
-      `// CSS loading by Patch.js`,
-      `if (window.patchjs) {`,
+      '// CSS loading by Patch.js',
+      'if (window.patchjs) {',
       Tpl.indent([
-        `window.patchjs.wait().load(fullhref, function () {`,
-        Template.indent([
-          `resolve();`
+        'window.patchjs.wait().load(__generateURL__(fullhref), function () {',
+        Tpl.indent([
+          'resolve();'
         ]),
-        `});`
+        '});'
       ]),
-      `} else {`,
+      '} else {',
       Tpl.indent([
-        `throw new Error('The loader of Patch.js is missing.');`
+        'throw new Error("The loader of Patch.js is missing.");'
       ]),
-      `}`
+      '}'
     ]);
     // ;
     source = source.replace(linkReg, cssLoadCode);
@@ -88,8 +88,56 @@ function onRequireExtension (source) {
   return source;
 }
 
+function onLocalVars (source, chunk) {
+  const Tpl = Template || this;
+  let hasDynamicEntry = false;
+
+  if (chunk.groupsIterable) {
+    for (const chunkGroup of chunk.groupsIterable) {
+      if (chunkGroup.getNumberOfChildren() > 0) hasDynamicEntry = true;
+    }
+  } else {
+    if (chunk.chunks) {
+      if (chunk.chunks.length > 0) hasDynamicEntry = true;
+    }
+  }
+
+  if (hasDynamicEntry) {
+    return Tpl.asString([
+      source,
+      '// for Patch.js generate path',
+      'function __generateURL__ (src) {',
+      Tpl.indent([
+        'var patchjsPath = window.patchjs.options.path + window.patchjs.options.version + "/";',
+        'if (patchjsPath && src) {',
+        Tpl.indent([
+          'for (var len = src.length; len > 0; len--) {',
+          Tpl.indent([
+            'var subSrc = src.substr(0, len);',
+            'if (patchjsPath.lastIndexOf(subSrc) === patchjsPath.length - subSrc.length) {',
+            Tpl.indent([
+              'return src.substring(len);'
+            ]),
+            '}'
+          ]),
+          '}',
+          'return src;'
+        ]),
+        '} else {',
+        Tpl.indent([
+          'throw new Error("Error URL.");'
+        ]),
+        '}'
+      ]),
+      '}'
+    ]);
+  } 
+  return source;
+}
+
 function onCompilation (compilation, params) {
   compilation.mainTemplate.hooks ? compilation.mainTemplate.hooks.requireExtensions.tap(pluginName, onRequireExtension) : compilation.mainTemplate.plugin("require-extensions", onRequireExtension);
+  compilation.mainTemplate.hooks ? compilation.mainTemplate.hooks.localVars.tap(pluginName, onLocalVars) : compilation.mainTemplate.plugin("local-vars", onLocalVars);
 }
 
 function onEmit (compilation, callback) {
@@ -99,12 +147,12 @@ function onEmit (compilation, callback) {
     if (compilation.assets.hasOwnProperty(fileName) && /\.(js|css)$/.test(fileName)) {
       const content = compilation.assets[fileName].source();
       if (content) {
-        // calculate diff file path.
-        const diffFilePathArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
+        // calculate diff file name.
+        const diffFileNameArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
         // start build diff js.
-        for (let i = 0, len = diffFilePathArray.length; i < len; i++) {
+        for (let i = 0, len = diffFileNameArray.length; i < len; i++) {
           requestCallback.push((response) => {
-            this.buildDiffFile(diffFilePathArray[i], content, (result) => {
+            this.buildDiffFile(diffFileNameArray[i], content, (result) => {
               try {
                 response(null, result);
               } catch (e) {}
@@ -148,20 +196,20 @@ PatchjsWebpackPlugin.prototype.apply = function (compiler) {
 };
 
 // diff build js
-PatchjsWebpackPlugin.prototype.buildDiffFile = function (diffFileItem, content, callback) {
+PatchjsWebpackPlugin.prototype.buildDiffFile = function (diffFile, content, callback) {
   const timeout = this.options.timeout;
   co(function * () { // es6 co
-    const result = yield urllib.requestThunk(diffFileItem.localFileUrl, {timeout: timeout});
+    const result = yield urllib.requestThunk(diffFile.localReqUrl, {timeout: timeout});
     const localFileContent = result.data.toString();
     if (result.status === 200) {
       const result = calcDiffData(localFileContent, content);
       let diffResult = {
-        diffFileName: diffFileItem.diffFileName,
+        diffFileName: diffFile.diffFileName,
         source: JSON.stringify(result)
       };
       callback(diffResult);
     } else {
-      const msg = `Not Found: ${diffFileItem.localFileUrl}`;
+      const msg = `Not Found: ${diffFile.localReqUrl}`;
       let result = {
         errCode: 'reserror',
         msg: msg

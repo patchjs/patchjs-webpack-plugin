@@ -25,21 +25,27 @@ export function getBuildConfig (buildCfgPath) {
 }
 
 export function calcDiffFileName (fileName, path, version, count) {
+  var versionReg = /\d+\.\d+\.\d+/;
+  let filePath = version + '/' + fileName;
+  if (versionReg.test(fileName)) {
+    filePath = fileName.replace(/(\d+)\.(\d+)\.(\d+)/, version);
+  }
   const lastDotIndex = version.lastIndexOf('.');
   const prefix = version.substring(0, lastDotIndex);
-  const suffix = version.substring(lastDotIndex + 1);
   const extName = fileName.substring(fileName.lastIndexOf('.'));
+  let patchVersion = parseInt(version.substring(lastDotIndex + 1));
+  
   let diffFileNameArray = [];
   for (let i = 1; i < count + 1; i++) {
-    const data = {};
-    const patchVersion = parseInt(suffix, 10) - i;
+    patchVersion -= 1;
     if (patchVersion < 0) {
       break;
     }
-    const localVersion = `${prefix}.${patchVersion.toString()}`;
-    data.localFileUrl = `${path}${localVersion}/${fileName}`;
-    data.diffFileName = fileName.replace(new RegExp(extName + '$', 'i'), `-${localVersion}${extName}`);
-    diffFileNameArray.push(data);
+    const item = {};
+    const localVersion = `${prefix}.${patchVersion}`;
+    item.localReqUrl = `${path}${filePath.replace(versionReg, localVersion)}`;
+    item.diffFileName = fileName.replace(new RegExp(extName + '$', 'i'), `-${localVersion}${extName}`);
+    diffFileNameArray.push(item);
   }
   return diffFileNameArray;
 }

@@ -28,9 +28,9 @@ module.exports = {
     ]
   },
   plugins: [
+    new PatchjsWebpackPlugin({increment: increment, path: 'http://127.0.0.1:8080/dist/default/'}),
     new UglifyjsWebpackPlugin(),
     new ExtractTextPlugin('[name].css'),
-    new webpack.HashedModuleIdsPlugin(),
-    new PatchjsWebpackPlugin({increment: increment, path: 'http://127.0.0.1:8080/dist/default/'})
+    new webpack.HashedModuleIdsPlugin()
   ]
 };
