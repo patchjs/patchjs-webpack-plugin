@@ -114,7 +114,8 @@ function onLocalVars (source, chunk) {
           'for (var len = src.length; len > 0; len--) {',
           Tpl.indent([
             'var subSrc = src.substr(0, len);',
-            'if (patchjsPath.lastIndexOf(subSrc) === patchjsPath.length - subSrc.length) {',
+            'var index = patchjsPath.lastIndexOf(subSrc);',
+            'if (index !== -1 && index === patchjsPath.length - subSrc.length) {',
             Tpl.indent([
               'return src.substring(len);'
             ]),
