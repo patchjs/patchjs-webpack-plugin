@@ -1,17 +1,17 @@
-# Patch.js for Webpack
+# Patch.js 的 Webpack 插件
 
 
-## Introduction
+## 介绍
 
-This plug-in is used to calculate the difference between the two files at the build stage.
+这个 webpack 插件用于在构建阶段产生历史版本与当前最新的 Diff 文件。
 
-## Installation
+## 安装
 
 ```bash
 npm install patchjs-webpack-plugin --save-dev
 ```
 
-## How to use
+## 如何使用
 
 ```js
 var path = require('path');
@@ -37,13 +37,13 @@ module.exports = {
 
 ```
 
-## Options
+## 配置项
 
 **increment** `Boolean`
 
 **default** `false`
 
-It enables the incremental build.
+是否开启字符级增量构建。
 
 <br/>
 
@@ -51,19 +51,19 @@ It enables the incremental build.
 
 **default** `5`
 
-how many incremental versions are build.
+修订号向下自动降级多少个版本。
 
 <br/>
 
 **path** `String`
 
-the URL prefix of a static file.
+静态文件 URL 的前缀。
 
-eg: 
+例如: 
 
 URL: `http://static.domain.com/path/to/1.0.0/file.js`
 
-path : `http://static.domain.com/path/to/`
+path: `http://static.domain.com/path/to/`
 
 <br/>
 
@@ -71,17 +71,9 @@ path : `http://static.domain.com/path/to/`
 
 **default** `30000`
 
-request timeout value.
+请求超时最大时间
 
-## Others 
+## 注意
 
-if you used optimize-css-assets-webpack-plugin，please filter diff file by assetNameRegExp.
-
-
-
-
-
-
-
-
+如果使用 optimize-css-assets-webpack-plugin 插件，必须通过 assetNameRegExp 过滤 diff 文件。
 
