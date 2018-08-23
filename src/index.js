@@ -189,10 +189,10 @@ function onEmit (compilation, callback) {
 }
 
 PatchjsWebpackPlugin.prototype.apply = function (compiler) {
+  compiler.hooks ? compiler.hooks.compilation.tap(pluginName, onCompilation) : compiler.plugin('compilation', onCompilation);
   if (!this.options.increment) {
     return;
   }
-  compiler.hooks ? compiler.hooks.compilation.tap(pluginName, onCompilation) : compiler.plugin('compilation', onCompilation);
   compiler.hooks ? compiler.hooks.emit.tapAsync(pluginName, onEmit.bind(this)) :  compiler.plugin('emit', onEmit.bind(this));
 };
 

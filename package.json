@@ -1,7 +1,7 @@
 {
   "name": "patchjs-webpack-plugin",
   "description": "Patch.js for webpack",
-  "version": "0.1.6beta.1",
+  "version": "0.1.6",
   "author": {
     "name": "yulongheli"
   },
