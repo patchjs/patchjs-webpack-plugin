@@ -22,7 +22,7 @@ function PatchjsWebpackPlugin (options) {
   const pkgConfig = getPkgConfig(this.options.pkgPath);
   if (!pkgConfig) {
     logger.err('the file of package.json is missing.');
-    process.exit();
+    process.exit(1);
   }
 
   this.pkgConfig = pkgConfig;
@@ -153,7 +153,7 @@ function onEmit (compilation, callback) {
         this.validateVersion(reqUrl, (isValid) => {
           if (!isValid) {
             logger.err(`Deployed Version: ${version}`);
-            process.exit();
+            process.exit(1);
             return;
           }
           if (this.options.increment) {
@@ -193,7 +193,7 @@ function onEmit (compilation, callback) {
         } else {
           logger.err(item.msg);
           if (item.errCode === 'reqerror') {
-            process.exit();
+            process.exit(1);
           }
         }
       }
