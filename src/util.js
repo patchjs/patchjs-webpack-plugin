@@ -13,8 +13,8 @@ export const logger = {
   }
 };
 
-export function getBuildConfig (buildCfgPath) {
-  let content = fs.readFileSync(buildCfgPath, {
+export function getPkgConfig (pkgPath) {
+  let content = fs.readFileSync(pkgPath, {
     encoding: 'utf8'
   });
   if (!content) {
@@ -26,7 +26,7 @@ export function getBuildConfig (buildCfgPath) {
 
 export function calcDiffFileName (fileName, path, version, count) {
   var versionReg = /\d+\.\d+\.\d+/;
-  let filePath = version + '/' + fileName;
+  let filePath = `${version}/${fileName}`;
   if (versionReg.test(fileName)) {
     filePath = fileName.replace(/(\d+)\.(\d+)\.(\d+)/, version);
   }

@@ -73,6 +73,12 @@ path: `http://static.domain.com/path/to/`
 
 请求超时最大时间
 
+**validateVersion** `Boolean`
+
+**default** `false`
+
+检测当前应用的版本号是否已经部署。
+
 ## 注意
 
 如果使用 optimize-css-assets-webpack-plugin 插件，必须通过 assetNameRegExp 过滤 diff 文件。

@@ -1,5 +1,5 @@
 import calcDiffData from 'patchjs-diff';
-import {logger, calcDiffFileName, getBuildConfig} from './util';
+import {logger, calcDiffFileName, getPkgConfig} from './util';
 import urllib from 'urllib';
 import co from 'co';
 import {parallel} from 'async';
@@ -7,23 +7,25 @@ import {Template} from 'webpack';
 
 
 const defaultOptions = {
-  buildConfigPath: 'package.json',
+  pkgPath: 'package.json',
   count: 5,
   increment: false,
   path: '',
-  timeout: 30000
+  timeout: 30000,
+  validateVersion: false
 };
 
 const pluginName = 'patchjs-webpack-plugin';
 
 function PatchjsWebpackPlugin (options) {
   this.options = Object.assign(defaultOptions, options);
-  const buildConfig = getBuildConfig(this.options.buildConfigPath);
-  if (!buildConfig) {
+  const pkgConfig = getPkgConfig(this.options.pkgPath);
+  if (!pkgConfig) {
+    logger.err('the file of package.json is missing.');
     process.exit();
   }
 
-  this.buildConfig = buildConfig;
+  this.pkgConfig = pkgConfig;
 }
 
 function onRequireExtension (source) {
@@ -142,24 +144,36 @@ function onCompilation (compilation, params) {
 }
 
 function onEmit (compilation, callback) {
-  const version = this.buildConfig.version;
+  const version = this.pkgConfig.version;
   let requestCallback = [];
   for (let fileName in compilation.assets) {
     if (compilation.assets.hasOwnProperty(fileName) && /\.(js|css)$/.test(fileName)) {
-      const content = compilation.assets[fileName].source();
-      if (content) {
-        // calculate diff file name.
-        const diffFileNameArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
-        // start build diff js.
-        for (let i = 0, len = diffFileNameArray.length; i < len; i++) {
-          requestCallback.push((response) => {
-            this.buildDiffFile(diffFileNameArray[i], content, (result) => {
-              try {
-                response(null, result);
-              } catch (e) {}
-            });
-          });
-        }
+      if (this.options.validateVersion) {
+        const reqUrl = `${this.options.path}${version}/${fileName}`;
+        this.validateVersion(reqUrl, (isValid) => {
+          if (!isValid) {
+            logger.err(`Deployed Version: ${version}`);
+            process.exit();
+            return;
+          }
+          if (this.options.increment) {
+            const content = compilation.assets[fileName].source();
+            if (content) {
+              // calculate diff file name.
+              const diffFileNameArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
+              // start build diff js.
+              for (let i = 0, len = diffFileNameArray.length; i < len; i++) {
+                requestCallback.push((response) => {
+                  this.buildDiffFile(diffFileNameArray[i], content, (result) => {
+                    try {
+                      response(null, result);
+                    } catch (e) {}
+                  });
+                });
+              }
+            }
+          }
+        });
       }
     }
   }
@@ -179,22 +193,34 @@ function onEmit (compilation, callback) {
         } else {
           logger.err(item.msg);
           if (item.errCode === 'reqerror') {
-            process.exit(1);
+            process.exit();
           }
         }
       }
-      callback();
     }
+    callback();
   });
 }
 
 PatchjsWebpackPlugin.prototype.apply = function (compiler) {
   compiler.hooks ? compiler.hooks.compilation.tap(pluginName, onCompilation) : compiler.plugin('compilation', onCompilation);
-  if (!this.options.increment) {
-    return;
-  }
   compiler.hooks ? compiler.hooks.emit.tapAsync(pluginName, onEmit.bind(this)) :  compiler.plugin('emit', onEmit.bind(this));
 };
+
+PatchjsWebpackPlugin.prototype.validateVersion = function (reqUrl, callback) {
+  const timeout = this.options.timeout;
+  co(function * () { // es6 co
+    const result = yield urllib.requestThunk(reqUrl, {timeout: timeout});
+    if (result.status === 200) {
+      callback(false);
+    } else {
+      callback(true);
+    }
+  }).catch((e) => {
+    logger.err(e);
+    callback(false);
+  });
+}
 
 // diff build js
 PatchjsWebpackPlugin.prototype.buildDiffFile = function (diffFile, content, callback) {
@@ -210,7 +236,7 @@ PatchjsWebpackPlugin.prototype.buildDiffFile = function (diffFile, content, call
       };
       callback(diffResult);
     } else {
-      const msg = `Not Found: ${diffFile.localReqUrl}`;
+      const msg = `URL Not Found: ${diffFile.localReqUrl}`;
       let result = {
         errCode: 'reserror',
         msg: msg

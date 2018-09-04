@@ -1,6 +1,6 @@
 /* eslint-env node, mocha */
 import expect from 'expect.js';
-import {logger, calcDiffFileName, getBuildConfig} from '../src/util';
+import {logger, calcDiffFileName, getPkgConfig} from '../src/util';
 
 describe('util.js', () => {
   it('logger', () => {
@@ -10,11 +10,11 @@ describe('util.js', () => {
   });
 
   const testPath = __dirname;
-  const buildCfgPath = testPath + '/data/package.json';
+  const pkgPath = testPath + '/data/package.json';
 
   describe('config.js', () => {
-    it('getBuildConfig (buildCfgPath)', () => {
-      expect(getBuildConfig(buildCfgPath).version).to.be('3.4.5');
+    it('getPkgConfig (pkgPath)', () => {
+      expect(getPkgConfig(pkgPath).version).to.be('3.4.5');
     });
   });
 

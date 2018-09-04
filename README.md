@@ -73,6 +73,15 @@ path : `http://static.domain.com/path/to/`
 
 request timeout value.
 
+<br/>
+
+**validateVersion** `Boolean`
+
+**default** `false`
+
+check whether the current version is deployed.
+
+
 ## Others 
 
 if you used optimize-css-assets-webpack-plugin，please filter diff file by assetNameRegExp.
