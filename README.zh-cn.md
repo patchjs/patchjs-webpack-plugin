@@ -57,7 +57,7 @@ module.exports = {
 
 **path** `String`
 
-静态文件 URL 的前缀。
+静态文件 URL 的前缀，建议使用生产环境的 URL 。
 
 例如: 
 

@@ -57,7 +57,7 @@ how many incremental versions are build.
 
 **path** `String`
 
-the URL prefix of a static file.
+the URL prefix of a static file, recommended to use the production environment URL.
 
 eg: 
 
