@@ -69,7 +69,7 @@ path: `http://static.domain.com/path/to/`
 
 **timeout** `Number`
 
-**default** `30000`
+**default** `30000ms`
 
 请求超时最大时间
 

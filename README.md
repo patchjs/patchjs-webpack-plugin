@@ -69,7 +69,7 @@ path : `http://static.domain.com/path/to/`
 
 **timeout** `Number`
 
-**default** `30000`
+**default** `30000ms`
 
 request timeout value.
 
