@@ -145,39 +145,65 @@ function onCompilation (compilation, params) {
 
 function onEmit (compilation, callback) {
   const version = this.pkgConfig.version;
-  let requestCallback = [];
+  const requestCallback = [];
+  const validateCallback = [];
+  let isRequestCompleted = false;
+  let isValidateCompleted = false;
+
   for (let fileName in compilation.assets) {
     if (compilation.assets.hasOwnProperty(fileName) && /\.(js|css)$/.test(fileName)) {
       if (this.options.validateVersion) {
         const reqUrl = `${this.options.path}${version}/${fileName}`;
-        this.validateVersion(reqUrl, (isValid) => {
-          if (!isValid) {
+        validateCallback.push((response) => {
+          this.validateVersion(reqUrl, (isValid) => {
+            try {
+              response(null, isValid);
+            } catch (e) {}
+          });
+        });
+      }
+      
+      if (this.options.increment) {
+        const content = compilation.assets[fileName].source();
+        if (content) {
+          // calculate diff file name.
+          const diffFileNameArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
+          // start build diff js.
+          for (let i = 0, len = diffFileNameArray.length; i < len; i++) {
+            requestCallback.push((response) => {
+              this.buildDiffFile(diffFileNameArray[i], content, (result) => {
+                try {
+                  response(null, result);
+                } catch (e) {}
+              });
+            });
+          }
+        }
+      }
+    }
+  }
+
+  if (validateCallback.length > 0) {
+    parallel(validateCallback, (err, results) => {
+      isValidateCompleted = true;
+      if (!err) {
+        for (let i = 0, len = results.length; i < len; i++) {
+          if (!results[i]) {
             logger.err(`Deployed Version: ${version}`);
             process.exit(1);
             return;
           }
-          if (this.options.increment) {
-            const content = compilation.assets[fileName].source();
-            if (content) {
-              // calculate diff file name.
-              const diffFileNameArray = calcDiffFileName(fileName, this.options.path, version, this.options.count);
-              // start build diff js.
-              for (let i = 0, len = diffFileNameArray.length; i < len; i++) {
-                requestCallback.push((response) => {
-                  this.buildDiffFile(diffFileNameArray[i], content, (result) => {
-                    try {
-                      response(null, result);
-                    } catch (e) {}
-                  });
-                });
-              }
-            }
-          }
-        });
+        }
       }
-    }
+      if (isRequestCompleted || requestCallback.length === 0) {
+        callback();
+      }
+    })
   }
+
   parallel(requestCallback, (err, results) => {
+    isRequestCompleted = true;
+
     if (!err) {
       for (let i = 0, len = results.length; i < len; i++) {
         const item = results[i];
@@ -198,7 +224,10 @@ function onEmit (compilation, callback) {
         }
       }
     }
-    callback();
+
+    if (isValidateCompleted || validateCallback.length === 0) {
+      callback();
+    }
   });
 }
 
@@ -218,7 +247,7 @@ PatchjsWebpackPlugin.prototype.validateVersion = function (reqUrl, callback) {
     }
   }).catch((e) => {
     logger.err(e);
-    callback(false);
+    callback(true);
   });
 }
 
